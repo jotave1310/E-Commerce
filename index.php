@@ -8,7 +8,7 @@ if (!isset($_SESSION['cart'])) {
 }
 
 // Obter produtos em destaque do banco de dados
-$produtos = obterProdutosDestaque(); // Supondo que esta função retorne produtos marcados como destaque
+$produtos = obterProdutosDestaque(4); // Função corrigida // Supondo que esta função retorne produtos marcados como destaque
 
 ?>
 
@@ -31,7 +31,7 @@ $produtos = obterProdutosDestaque(); // Supondo que esta função retorne produt
                 <a href="index.php" class="logo">E-commerce Project</a>
                 <nav>
                     <ul>
-                        <li><a href="index.php">Início</a></li>
+                        <li><a href="index.php" class="active">Início</a></li>
                         <li><a href="produtos.php">Produtos</a></li>
                         <li><a href="sobre.php">Sobre</a></li>
                         <li><a href="contato.php">Contato</a></li>
@@ -46,7 +46,7 @@ $produtos = obterProdutosDestaque(); // Supondo que esta função retorne produt
                         <?php endif; ?>
                     </ul>
                 </nav>
-                <a href="carrinho.php" class="cart-icon">
+                <a href="carrinho.php" class="cart-icon" id="cart-icon">
                     <i class="fa-solid fa-cart-shopping"></i> Carrinho (<?php echo array_sum($_SESSION['cart']); ?>)
                 </a>
             </div>

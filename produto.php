@@ -398,6 +398,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_avaliacao'])) 
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: var(--spacing-xl);
         }
+        .stock-warning {
+            margin-bottom: var(--spacing-md);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stock-warning.out-of-stock {
+            color: #ff6b6b;
+        }
+
+        .stock-warning.low-stock {
+            color: #feca57;
+        }
 
         @media (max-width: 992px) {
             .product-detail-grid {
@@ -481,18 +496,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_avaliacao'])) 
                         <span class="reviews-count">(<?php echo count($avaliacoes); ?> avaliações)</span>
                     </div>
                     <div class="product-price">R$ <?php echo number_format($produto['preco'], 2, ',', '.'); ?></div>
+                    <?php if ($produto['estoque'] <= 0): ?>
+                    <div class="stock-warning" style="color: #ff6b6b; margin-bottom: var(--spacing-md);">
+                        ⚠️ Este produto está temporariamente fora de estoque
+                    </div>
+                <?php elseif ($produto['estoque'] < 5): ?>
+                    <div class="stock-warning" style="color: #feca57; margin-bottom: var(--spacing-md);">
+                        ⚠️ Últimas unidades disponíveis!
+                    </div>
+                <?php endif; ?>
                     <p class="product-short-description"><?php echo htmlspecialchars($produto['descricao_curta']); ?></p>
                 </div>
 
                 <div class="add-to-cart-section">
-                    <div class="quantity-control">
-                        <button class="quantity-btn" onclick="changeQuantity(-1)">-</button>
-                        <input type="number" id="quantity" value="1" min="1" max="<?php echo $produto['estoque']; ?>" class="quantity-input">
-                        <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
-                    </div>
-                    <button class="btn-add-to-cart" onclick="addToCart(<?php echo $produto['id']; ?>)">
-                        <span>🛒</span> Adicionar ao Carrinho
-                    </button>
+                    <?php if ($produto['estoque'] > 0): ?>
+                        <div class="quantity-control">
+                            <button class="quantity-btn" onclick="changeQuantity(-1)">-</button>
+                            <input type="number" id="quantity" value="1" min="1" max="<?php echo $produto['estoque']; ?>" class="quantity-input">
+                            <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
+                        </div>
+                        <button class="btn-add-to-cart" onclick="addToCart(<?php echo $produto['id']; ?>)">
+                            <span>🛒</span> Adicionar ao Carrinho
+                        </button>
+                    <?php else: ?>
+                        <div class="out-of-stock">
+                            <span>⚠️</span> Fora de Estoque
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -641,7 +671,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_avaliacao'])) 
             </div>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function changeMainImage(thumbnail) {
             document.getElementById('mainProductImage').src = thumbnail.src;
@@ -663,31 +693,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_avaliacao'])) 
             quantityInput.value = newQuantity;
         }
 
-        function addToCart(productId) {
-        const quantity = document.getElementById('quantity').value;
-        
-        // Fazer requisição AJAX para adicionar ao carrinho
-        fetch('adicionar_carrinho.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `produto_id=${productId}&quantidade=${quantity}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(`Produto adicionado ao carrinho!`);
-                // Atualizar o contador do carrinho no header
-                document.querySelector('.cart-icon').innerHTML = `<i class="fa-solid fa-cart-shopping"></i> Carrinho (${data.total_itens})`;
-            } else {
-                alert(`Erro: ${data.message}`);
-            }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-        });
+        function adicionarAoCarrinho(produtoId, quantidade = 1) {
+            const formData = new FormData();
+            formData.append('produto_id', produtoId);
+            formData.append('quantidade', quantidade);
+
+            fetch('adicionar_carrinho.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: '#fff'
+                    });
+
+                    document.querySelector('#contador-carrinho').textContent = data.total_itens;
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message,
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: '#fff'
+                    });
+                }
+            })
+            .catch(() => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro!',
+                    text: 'Não foi possível processar sua solicitação.',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff'
+                });
+            });
     }
+
+        function addToCart(productId) {
+            const quantity = document.getElementById('quantity').value;
+            
+            fetch('adicionar_carrinho.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `produto_id=${productId}&quantidade=${quantity}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: '#fff'
+                    });
+                    
+                    // Atualizar o contador do carrinho
+                    const cartIcon = document.querySelector('.cart-icon');
+                    cartIcon.innerHTML = `<i class="fa-solid fa-cart-shopping"></i> Carrinho (${data.total_itens})`;
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        text: data.message,
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: '#fff'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro de conexão',
+                    text: 'Não foi possível conectar ao servidor',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff'
+                });
+            });
+        }
 
         // Animação de entrada dos elementos
         const observer = new IntersectionObserver((entries) => {

@@ -3,7 +3,7 @@
 $host = 'localhost';
 $dbname = 'ecommerce_db';
 $username = 'root';
-$password = '';
+$password = 'root';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
@@ -49,9 +49,10 @@ function obterProdutosDestaque($limite = 6) {
             LEFT JOIN categorias c ON p.categoria_id = c.id 
             WHERE p.ativo = 1 AND p.destaque = 1 
             ORDER BY p.data_criacao DESC 
-            LIMIT ?
+            LIMIT :limite
         ");
-        $stmt->execute([$limite]);
+        $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll();
         
     } catch (PDOException $e) {
@@ -591,14 +592,14 @@ function obterCarrinhoUsuario($usuarioId) {
         $stmt->execute([$usuarioId]);
         $carrinho = $stmt->fetch();
         
-        if (!$carrinho) {
-            // Criar novo carrinho
-            $stmt = $pdo->prepare("INSERT INTO carrinhos (usuario_id) VALUES (?)");
-            $stmt->execute([$usuarioId]);
-            return $pdo->lastInsertId();
+        if ($carrinho) {
+            return $carrinho['id'];
         }
         
-        return $carrinho['id'];
+        // Criar novo carrinho
+        $stmt = $pdo->prepare("INSERT INTO carrinhos (usuario_id) VALUES (?)");
+        $stmt->execute([$usuarioId]);
+        return $pdo->lastInsertId();
         
     } catch (PDOException $e) {
         error_log("Erro ao obter carrinho: " . $e->getMessage());
@@ -624,12 +625,12 @@ function adicionarAoCarrinho($carrinhoId, $produtoId, $quantidade = 1) {
             $novaQuantidade = $item['quantidade'] + $quantidade;
             $stmt = $pdo->prepare("UPDATE carrinho_itens SET quantidade = ? 
                                   WHERE carrinho_id = ? AND produto_id = ?");
-            $stmt->execute([$novaQuantidade, $carrinhoId, $produtoId]);
+            return $stmt->execute([$novaQuantidade, $carrinhoId, $produtoId]);
         } else {
             // Adicionar novo item
             $stmt = $pdo->prepare("INSERT INTO carrinho_itens (carrinho_id, produto_id, quantidade) 
                                   VALUES (?, ?, ?)");
-            $stmt->execute([$carrinhoId, $produtoId, $quantidade]);
+            return $stmt->execute([$carrinhoId, $produtoId, $quantidade]);
         }
         
         return true;
@@ -702,10 +703,17 @@ function obterItensCarrinho($carrinhoId) {
     
     try {
         $stmt = $pdo->prepare("
-            SELECT ci.produto_id, ci.quantidade, p.nome, p.preco, p.imagem_url, c.nome as categoria 
+            SELECT 
+                ci.produto_id, 
+                ci.quantidade, 
+                p.nome, 
+                p.preco, 
+                COALESCE(ip.url, '/placeholder.svg?height=80&width=80&text=Sem+Imagem') as imagem_url,
+                c.nome as categoria 
             FROM carrinho_itens ci
-            JOIN produtos p ON ci.produto_id = p.id
+            INNER JOIN produtos p ON ci.produto_id = p.id AND p.ativo = 1
             LEFT JOIN categorias c ON p.categoria_id = c.id
+            LEFT JOIN imagens_produto ip ON p.imagem_capa_id = ip.id
             WHERE ci.carrinho_id = ?
         ");
         $stmt->execute([$carrinhoId]);

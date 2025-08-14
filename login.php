@@ -72,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['registro'])) {
     <title>Login - E-commerce Project</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
     <?php include 'header.php'; ?>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -459,7 +460,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['registro'])) {
                 <div class="form-group">
                     <input type="password" class="form-input" name="senha" placeholder=" " required>
                     <label class="form-label">Senha</label>
-                    <button type="button" class="password-toggle" onclick="togglePassword(this)">👁️</button>
+                    <button type="button" class="password-toggle" onclick="togglePassword(this)"><i class="fa-solid fa-eye"></i></button>
                 </div>
                 
                 <button type="submit" name="login" class="auth-button">
@@ -491,13 +492,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['registro'])) {
                 <div class="form-group">
                     <input type="password" class="form-input" name="senha" placeholder=" " required>
                     <label class="form-label">Senha</label>
-                    <button type="button" class="password-toggle" onclick="togglePassword(this)">👁️</button>
+                    <button type="button" class="password-toggle" onclick="togglePassword(this)"><i class="fa-solid fa-eye"></i></button>
                 </div>
                 
                 <div class="form-group">
-                    <input type="password" class="form-input" name="confirmar_senha" placeholder=" " required>
+                    <input type="text" class="form-input" name="confirmar_senha" placeholder=" " required>
                     <label class="form-label">Confirmar Senha</label>
-                    <button type="button" class="password-toggle" onclick="togglePassword(this)">👁️</button>
+                    <button type="button" class="password-toggle" onclick="togglePassword(this)"><i class="fa-solid fa-eye"></i></button>
                 </div>
                 
                 <button type="submit" name="registro" class="auth-button">
@@ -527,13 +528,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['registro'])) {
         }
         
         function togglePassword(button) {
-            const input = button.previousElementSibling;
-            if (input.type === 'password') {
-                input.type = 'text';
-                button.textContent = '🙈';
+            // Subindo para o elemento pai que contém tanto o input quanto o botão
+            const parentDiv = button.parentNode;
+
+            // Pegando o input dentro da div
+            const input = parentDiv.querySelector('input');
+
+            const currentType = input.type;
+
+            if (currentType === 'password') {
+                input.type = 'text';  // Muda para tipo texto
+                button.innerHTML = '<i class="fa-solid fa-eye-slash"></i>'; // Altera o ícone
             } else {
-                input.type = 'password';
-                button.textContent = '👁️';
+                input.type = 'password'; // Retorna para tipo senha
+                button.innerHTML = '<i class="fa-solid fa-eye"></i>'; // Retorna o ícone original
             }
         }
         

@@ -54,6 +54,7 @@ $total = calcularTotalCarrinho($carrinhoId);
     <title>Carrinho de Compras - E-commerce Project</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <?php include "header.php"; ?>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <style>
@@ -75,11 +76,11 @@ $total = calcularTotalCarrinho($carrinhoId);
     color: black;
     padding: 1rem;
     text-align: left;
-    border-bottom: 1px solid white;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .cart-table th {
-    background-color: black;
+    background-color: #f8f9fa;
     font-weight: 600;
 }
 
@@ -94,25 +95,26 @@ $total = calcularTotalCarrinho($carrinhoId);
     height: 80px;
     object-fit: contain;
     border-radius: var(--border-radius-sm);
-    background-color: black;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
 }
 
 .cart-product-category {
     font-size: 0.85rem;
-    color: var(--text-muted);
+    color: #6c757d;
     margin-top: 0.25rem;
 }
 
 .cart-quantity-input {
     width: 60px;
     padding: 0.5rem;
-    border: 1px solid black;
+    border: 1px solid #ddd;
     border-radius: var(--border-radius-sm);
     text-align: center;
 }
 
 .cart-summary {
-    background-color: black;
+    background-color: #f8f9fa;
     border-radius: var(--border-radius-md);
     box-shadow: var(--shadow-sm);
     padding: 1.5rem;
@@ -125,17 +127,76 @@ $total = calcularTotalCarrinho($carrinhoId);
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
     font-weight: 600;
-    color: var(--primary-color);
+    color: #28a745;
 }
 
 .cart-actions {
     display: flex;
     gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .btn-sm {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
+}
+
+.btn-update {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.btn-update:hover {
+    background-color: #0056b3;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .cart-table {
+        overflow-x: auto;
+    }
+    
+    .cart-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .cart-product-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .cart-product-image {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.empty-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+.empty-description {
+    color: #6c757d;
+    margin-bottom: 2rem;
 }
 </style>
 <body>
@@ -153,12 +214,14 @@ $total = calcularTotalCarrinho($carrinhoId);
             
             <?php if (isset($mensagem)): ?>
                 <div class="alert alert-success">
+                    <i class="fa-solid fa-check-circle"></i>
                     <?php echo htmlspecialchars($mensagem); ?>
                 </div>
             <?php endif; ?>
             
             <?php if (isset($erro)): ?>
                 <div class="alert alert-error">
+                    <i class="fa-solid fa-exclamation-triangle"></i>
                     <?php echo htmlspecialchars($erro); ?>
                 </div>
             <?php endif; ?>
@@ -168,7 +231,10 @@ $total = calcularTotalCarrinho($carrinhoId);
                     <div class="empty-icon"><i class="fa-solid fa-cart-arrow-down"></i></div>
                     <h4 class="empty-title">Seu carrinho está vazio</h4>
                     <p class="empty-description">Adicione alguns produtos para continuar comprando!</p>
-                    <a href="produtos.php" class="btn btn-primary">Continuar Comprando</a>
+                    <a href="produtos.php" class="btn btn-primary">
+                        <i class="fa-solid fa-shopping-bag"></i>
+                        Continuar Comprando
+                    </a>
                 </div>
             <?php else: ?>
                 <div class="cart-table">
@@ -187,31 +253,38 @@ $total = calcularTotalCarrinho($carrinhoId);
                                 <tr>
                                     <td>
                                         <div class="cart-product-info">
-                                            <?php if (!empty($item['imagem_url'])): ?>
-                                                <img src="<?php echo htmlspecialchars($item['imagem_url']); ?>" alt="<?php echo htmlspecialchars($item['nome']); ?>" class="cart-product-image">
-                                            <?php endif; ?>
+                                            <img src="<?php echo htmlspecialchars($item['imagem_url']); ?>" 
+                                                 alt="<?php echo htmlspecialchars($item['nome']); ?>" 
+                                                 class="cart-product-image"
+                                                 onerror="this.src='/placeholder.svg?height=80&width=80&text=Sem+Imagem'">
                                             <div>
                                                 <strong><?php echo htmlspecialchars($item['nome']); ?></strong>
-                                                <div class="cart-product-category"><?php echo htmlspecialchars($item['categoria']); ?></div>
+                                                <?php if (!empty($item['categoria'])): ?>
+                                                    <div class="cart-product-category">
+                                                        <?php echo htmlspecialchars($item['categoria']); ?>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     </td>
                                     <td>R$ <?php echo number_format($item['preco'], 2, ',', '.'); ?></td>
                                     <td>
-                                        <form method="POST">
+                                        <form method="POST" style="display: flex; align-items: center; gap: 0.5rem;">
                                             <input type="hidden" name="produto_id" value="<?php echo $item['produto_id']; ?>">
-                                            <input type="number" name="quantidade" value="<?php echo $item['quantidade']; ?>" min="1" max="10" class="cart-quantity-input">
-                                            <button type="submit" name="atualizar_quantidade" class="btn btn-sm">
-                                                Atualizar
+                                            <input type="number" name="quantidade" value="<?php echo $item['quantidade']; ?>" 
+                                                   min="1" max="10" class="cart-quantity-input">
+                                            <button type="submit" name="atualizar_quantidade" class="btn-update">
+                                                <i class="fa-solid fa-sync"></i>
                                             </button>
                                         </form>
                                     </td>
-                                    <td>R$ <?php echo number_format($item['preco'] * $item['quantidade'], 2, ',', '.'); ?></td>
+                                    <td><strong>R$ <?php echo number_format($item['preco'] * $item['quantidade'], 2, ',', '.'); ?></strong></td>
                                     <td>
-                                        <form method="POST">
+                                        <form method="POST" onsubmit="return confirm('Tem certeza que deseja remover este item?')">
                                             <input type="hidden" name="produto_id" value="<?php echo $item['produto_id']; ?>">
                                             <button type="submit" name="remover_item" class="btn btn-danger btn-sm">
                                                 <i class="fa-solid fa-trash"></i>
+                                                Remover
                                             </button>
                                         </form>
                                     </td>
@@ -223,19 +296,27 @@ $total = calcularTotalCarrinho($carrinhoId);
 
                 <div class="cart-summary">
                     <div class="cart-total">
-                        <strong>Total:</strong> R$ <?php echo number_format($total, 2, ',', '.'); ?>
+                        <i class="fa-solid fa-calculator"></i>
+                        <strong>Total: R$ <?php echo number_format($total, 2, ',', '.'); ?></strong>
                     </div>
                     
                     <div class="cart-actions">
-                        <form method="POST">
+                        <form method="POST" onsubmit="return confirm('Tem certeza que deseja limpar todo o carrinho?')">
                             <button type="submit" name="limpar_carrinho" class="btn btn-danger">
+                                <i class="fa-solid fa-trash-can"></i>
                                 Limpar Carrinho
                             </button>
                         </form>
                         
-                        <a href="produtos.php" class="btn">Continuar Comprando</a>
+                        <a href="produtos.php" class="btn">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            Continuar Comprando
+                        </a>
                         
-                        <a href="checkout.php" class="btn btn-primary">Finalizar Compra</a>
+                        <a href="checkout.php" class="btn btn-primary">
+                            <i class="fa-solid fa-credit-card"></i>
+                            Finalizar Compra
+                        </a>
                     </div>
                 </div>
             <?php endif; ?>
@@ -248,5 +329,17 @@ $total = calcularTotalCarrinho($carrinhoId);
             <p>Desenvolvido por <a href="https://dexo-mu.vercel.app/" class="dexo-credit">Dexo</a></p>
         </div>
     </footer>
+
+    <script>
+        // Confirmação para ações destrutivas
+        document.querySelectorAll('form[onsubmit]').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const confirmMessage = this.getAttribute('onsubmit').match(/confirm$$'([^']+)'$$/);
+                if (confirmMessage && !confirm(confirmMessage[1])) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
